@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 import application.Main;
+import gui.listeners.DataChangerListener;
 import gui.util.Alerts;
+import gui.util.Utils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -25,7 +27,7 @@ import javafx.stage.Stage;
 import model.entities.Department;
 import model.services.DepartmentService;
 
-public class DepartmentListController implements Initializable {
+public class DepartmentListController implements Initializable, DataChangerListener {
 
 	private DepartmentService service;
 	
@@ -45,9 +47,9 @@ public class DepartmentListController implements Initializable {
 	
 	@FXML
 	public void onBtNewAction(ActionEvent event) {
-		Stage parentStage = gui.util.Utils.currentStage(event);
-		
-		createDialogForm("/gui/DepartmentForm.fxml", parentStage);
+		Stage parentStage = Utils.currentStage(event);
+		Department obj = new Department();
+		createDialogForm(obj, "/gui/DepartmentForm.fxml", parentStage);
 	}
 	
 	public void setDepartmentService(DepartmentService service) {
@@ -76,14 +78,19 @@ public class DepartmentListController implements Initializable {
 		tableViewDepartment.setItems(obsList);
 	}
 	
-	private void createDialogForm(String absoluteName, Stage parentStage) {
+	private void createDialogForm(Department obj, String absoluteName, Stage parentStage) {
 		try {
 			FXMLLoader loader = new FXMLLoader(getClass().getResource(absoluteName));
 			Pane pane = loader.load();
 			
+			DepartmentFormController controller = loader.getController();
+			controller.setDepartment(obj);
+			controller.setDepartmentService(new DepartmentService());
+			controller.subscribeDataChanceListenter(this);
+			controller.updateFormData();
 			
 			Stage dialogStage = new Stage();
-			dialogStage.setTitle("Enter Departamento Data");
+			dialogStage.setTitle("Enter Department data");
 			dialogStage.setScene(new Scene(pane));
 			dialogStage.setResizable(false);
 			dialogStage.initOwner(parentStage);
@@ -91,7 +98,13 @@ public class DepartmentListController implements Initializable {
 			dialogStage.showAndWait();
 		}
 		catch (IOException e) {
-			Alerts.showAlert("IOE", "Erro carregar View", e.getMessage(), AlertType.ERROR);
+			Alerts.showAlert("IO Exception", "Error loading view", e.getMessage(), AlertType.ERROR);
 		}
+	}
+
+	@Override
+	public void onDataChanged() {
+		updateTableView();
+		
 	}
 }
